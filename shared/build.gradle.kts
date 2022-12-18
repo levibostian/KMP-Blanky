@@ -2,10 +2,11 @@ plugins {
     id("com.android.library")
     kotlin("multiplatform")
     id("maven-publish")
+    id("co.touchlab.faktory.kmmbridge")
 }
 
 group = "earth.levi"
-version = "1.0-SNAPSHOT"
+version = System.getenv("LIBRARY_VERSION") ?: "local"
 
 repositories {
     gradlePluginPortal()
@@ -56,3 +57,13 @@ android {
         targetSdk = 32
     }
 }
+
+// Gradle plugin to generate SPM and/or cocoapods and publishes artifacts for you.
+// https://touchlab.github.io/KMMBridge/artifacts/MAVEN_REPO_ARTIFACTS
+kmmbridge {
+    mavenPublishArtifacts() // publish SPM compiled framework to Maven repository for storage. Package.swift will then point to the zip.
+    manualVersions() // we manually update the gradle module version
+    spm() // plugin should generate Package.swift file for us
+}
+
+addGithubPackagesRepository() // assuming that you're using github actions, this function will setup github packages maven repo for the maven repo to push to.

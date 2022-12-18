@@ -1,0 +1,22 @@
+name: SPM Snapshot
+
+on: [push, pull_request]
+
+permissions: read-all
+
+jobs:
+  determine_version:
+    outputs:
+      LIBRARY_VERSION: ${{ steps.get_version.outputs.LIBRARY_VERSION }}
+    steps:
+      - id: get_version
+        run: echo "LIBRARY_VERSION=$(git rev-parse --short=10 HEAD)" >> $GITHUB_OUTPUT
+
+  create-spm-snapshot:
+    needs: determine_version
+    env:
+      LIBRARY_VERSION: ${{ needs.determine_version.outputs.LIBRARY_VERSION }}
+    permissions:
+      contents: write # be able to push commits
+      packages: write # upload to maven repo
+    uses: touchlab/KMMBridgeGithubWorkflow/.github/workflows/faktorybuild.yml@v0.7
