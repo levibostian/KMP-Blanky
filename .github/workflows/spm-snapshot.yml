@@ -5,20 +5,32 @@ on: [push, pull_request]
 permissions: read-all
 
 jobs:
-  determine_version:
-    runs-on: ubuntu-latest
-    outputs:
-      LIBRARY_VERSION: ${{ steps.get_version.outputs.LIBRARY_VERSION }}
-    steps:
-      - id: get_version
-        run: echo "LIBRARY_VERSION=$(git rev-parse --short=10 HEAD)" >> $GITHUB_OUTPUT
-
   create-spm-snapshot:
-    runs-on: ubuntu-latest
-    needs: determine_version
-    env:
-      LIBRARY_VERSION: ${{ needs.determine_version.outputs.LIBRARY_VERSION }}
+    runs-on: macos-12
     permissions:
       contents: write # be able to push commits
       packages: write # upload to maven repo
-    uses: touchlab/KMMBridgeGithubWorkflow/.github/workflows/faktorybuild.yml@v0.7
+    steps:    
+      - uses: actions/checkout@v3
+      - name: Get version name 
+        run: echo "LIBRARY_VERSION=$(git rev-parse --short=10 HEAD)" >> $GITHUB_ENV
+      - name: Verify version name got set 
+        run: echo "Going to publish library, ${{ env.LIBRARY_VERSION }}"
+      
+      # Logic inspired by: https://github.com/touchlab/KMMBridgeGithubWorkflow
+      - uses: actions/setup-java@v3
+        with:
+          java-version-file: .java-version
+      - uses: gradle/wrapper-validation-action@v1
+      - name: Cache build tooling
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.konan
+          key: ${{ runner.os }}-v4-${{ hashFiles('*.gradle.kts') }}
+          
+      - name: Publish via gradle 
+        run: ./gradlew kmmBridgePublish -PGITHUB_PUBLISH_TOKEN=${{ secrets.GITHUB_TOKEN }} -PGITHUB_REPO=${{ github.repository }} --no-daemon --stacktrace
+        env:
+          GRADLE_OPTS: -Dkotlin.incremental=false -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -XX:MaxMetaspaceSize=512m"
