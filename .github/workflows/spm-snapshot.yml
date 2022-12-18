@@ -6,6 +6,7 @@ permissions: read-all
 
 jobs:
   determine_version:
+    runs-on: ubuntu-latest
     outputs:
       LIBRARY_VERSION: ${{ steps.get_version.outputs.LIBRARY_VERSION }}
     steps:
@@ -13,6 +14,7 @@ jobs:
         run: echo "LIBRARY_VERSION=$(git rev-parse --short=10 HEAD)" >> $GITHUB_OUTPUT
 
   create-spm-snapshot:
+    runs-on: ubuntu-latest
     needs: determine_version
     env:
       LIBRARY_VERSION: ${{ needs.determine_version.outputs.LIBRARY_VERSION }}
