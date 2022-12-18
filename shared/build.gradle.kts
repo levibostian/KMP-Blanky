@@ -1,6 +1,7 @@
 plugins {
     id("com.android.library")
     kotlin("multiplatform")
+    id("maven-publish")
 }
 
 group = "earth.levi"
