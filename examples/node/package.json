@@ -1,0 +1,14 @@
+{
+  "name": "ks",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dropbox-shared.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "kotlin": "^1.7.22"
+  }
+}

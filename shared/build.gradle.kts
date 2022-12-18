@@ -23,6 +23,10 @@ kotlin {
             }
         }
     }
+    js {
+        browser() // include if you want to create client-side js
+        nodejs()  // include if you want to create server-side js
+    }
     
     sourceSets {
         val commonMain by getting
@@ -37,6 +41,9 @@ kotlin {
 
         val iosMain by getting
         val iosTest by getting
+
+        val jsMain by getting
+        val jsTest by getting
     }
 }
 
