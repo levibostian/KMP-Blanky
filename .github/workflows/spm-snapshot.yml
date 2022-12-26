@@ -37,4 +37,10 @@ jobs:
           GRADLE_OPTS: -Dkotlin.incremental=false -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -XX:MaxMetaspaceSize=512m"
 
       - name: Run commit for Package.swift to be useful
-        run: git add Package.swift && git commit -m "Make SPM v${{ env.LIBRARY_VERSION }} available to use [skip ci]"
+        run: git add Package.swift && git commit -m "Make SPM v${{ env.LIBRARY_VERSION }} available to use [skip ci]" && git push
+
+      - name: Delete old packages to reduce carbon footprint of project
+        uses: actions/delete-package-versions@v3
+        with:
+          package-name: 'earth.levi.shared-kmmbridge'
+          min-versions-to-keep: 10
