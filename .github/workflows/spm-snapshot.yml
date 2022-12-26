@@ -31,9 +31,10 @@ jobs:
           key: ${{ runner.os }}-${{ hashFiles('*.gradle.kts') }}          
 
       - name: Build and upload SPM
-        run: ./gradlew kmmBridgePublish
+        run: ./gradlew kmmBridgePublish -PGITHUB_PUBLISH_TOKEN=${{ secrets.GITHUB_TOKEN }} -PGITHUB_REPO=${{ github.repository }} --no-daemon --stacktrace
         env:
           LIBRARY_VERSION: ${{ env.LIBRARY_VERSION }}
+          GRADLE_OPTS: -Dkotlin.incremental=false -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -XX:MaxMetaspaceSize=512m"
 
       - name: Run commit for Package.swift to be useful
         run: git add Package.swift && commit -m "Make SPM v${{ env.LIBRARY_VERSION }} available to use [skip ci]"
