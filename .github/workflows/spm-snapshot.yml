@@ -1,0 +1,49 @@
+name: SPM Snapshot
+
+on: [push, pull_request]
+
+permissions: read-all
+
+jobs:
+  # Workflow inspired by: https://github.com/touchlab/KMMBridgeGithubWorkflow
+  create-spm-snapshot:
+    runs-on: macos-latest
+    permissions:
+      contents: write # be able to push commits to branch
+      packages: write # upload SPM compiled xcframework file to maven repo for remote storage
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set unique library version for snapshot build
+        run: echo "LIBRARY_VERSION=$(git rev-parse --short=10 HEAD)" >> $GITHUB_ENV
+
+      - name: Verify version name got set 
+        run: echo "Going to publish library, ${{ env.LIBRARY_VERSION }}"
+
+      - uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '11'
+      - uses: gradle/wrapper-validation-action@v1
+      - name: Cache build tooling
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.konan
+          key: ${{ runner.os }}-${{ hashFiles('*.gradle.kts') }}          
+
+      - name: Build and upload SPM
+        run: ./gradlew kmmBridgePublish -PGITHUB_PUBLISH_TOKEN=${{ secrets.GITHUB_TOKEN }} -PGITHUB_REPO=${{ github.repository }} --no-daemon --stacktrace
+        env:
+          LIBRARY_VERSION: ${{ env.LIBRARY_VERSION }}
+          GRADLE_OPTS: -Dkotlin.incremental=false -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -XX:MaxMetaspaceSize=512m"
+
+      # KMM bridge gradle plugin tries to make commit for you. I set to manual so we can add [skip ci] to the message
+      - name: Run commit for Package.swift to be useful
+        run: git add Package.swift && git commit -m "Make SPM v${{ env.LIBRARY_VERSION }} available to use [skip ci]" && git push
+
+      - name: Delete old packages to reduce carbon footprint of project
+        uses: actions/delete-package-versions@v3
+        with:
+          package-name: 'earth.levi.shared-kmmbridge'
+          min-versions-to-keep: 10

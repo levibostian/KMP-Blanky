@@ -1,11 +1,18 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
+
 plugins {
     id("com.android.library")
     kotlin("multiplatform")
     id("maven-publish")
+    id("co.touchlab.faktory.kmmbridge")
 }
 
-group = "earth.levi"
-version = "1.0-SNAPSHOT"
+val packageName = "earth.levi"
+val libraryName = "dropbox"
+val libraryVersion = System.getenv("LIBRARY_VERSION") ?: "local"
+
+group = packageName
+version = libraryVersion
 
 repositories {
     gradlePluginPortal()
@@ -20,7 +27,7 @@ kotlin {
     ios {
         binaries {
             framework {
-                baseName = "dropbox"
+                baseName = libraryName
             }
         }
     }
@@ -49,10 +56,24 @@ kotlin {
 }
 
 android {
-    namespace = "earth.levi.dropbox"
+    namespace = "$packageName.$libraryName"
     compileSdk = 32
     defaultConfig {
         minSdk = 21
         targetSdk = 32
     }
 }
+
+kmmbridge {
+    // Use maven repository for hosting compiled xcframework file.
+    // Package.swift file will point to the remote URL.
+    mavenPublishArtifacts()
+    // I want to manually set the version of the module for more control.
+    manualVersions()
+    // Update Package.swift file.
+    // I want to commit manually so I can add [skip ci] to message
+    spm(commitManually = true)
+}
+
+// Configures KMM bridge to automatically use github repo packages for maven repo
+addGithubPackagesRepository()
