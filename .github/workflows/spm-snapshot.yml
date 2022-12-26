@@ -1,6 +1,14 @@
 name: SPM Snapshot
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches-ignore:    
+      - 'main'
+      - 'beta'
+      - 'alpha'
+    tags-ignore: 
+      - '*'
 
 permissions: read-all
 
