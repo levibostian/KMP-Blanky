@@ -65,9 +65,15 @@ android {
 }
 
 kmmbridge {
+    // Use maven repository for hosting compiled xcframework file.
+    // Package.swift file will point to the remote URL.
     mavenPublishArtifacts()
+    // I want to manually set the version of the module for more control.
     manualVersions()
+    // Update Package.swift file.
+    // I want to commit manually so I can add [skip ci] to message
     spm(commitManually = true)
 }
 
+// Configures KMM bridge to automatically use github repo packages for maven repo
 addGithubPackagesRepository()
