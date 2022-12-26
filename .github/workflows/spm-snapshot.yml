@@ -5,22 +5,22 @@ on: [push, pull_request]
 permissions: read-all
 
 jobs:
+  # Logic inspired by: https://github.com/touchlab/KMMBridgeGithubWorkflow
   create-spm-snapshot:
-    runs-on: macos-12
+    runs-on: macos-latest
     permissions:
       contents: write # be able to push commits
       packages: write # upload to maven repo
-    steps:    
+    steps:
       - uses: actions/checkout@v3
       - name: Get version name 
         run: echo "LIBRARY_VERSION=$(git rev-parse --short=10 HEAD)" >> $GITHUB_ENV
       - name: Verify version name got set 
         run: echo "Going to publish library, ${{ env.LIBRARY_VERSION }}"
-      
-      # Logic inspired by: https://github.com/touchlab/KMMBridgeGithubWorkflow
       - uses: actions/setup-java@v3
         with:
-          java-version-file: .java-version
+          distribution: temurin
+          java-version: '11'
       - uses: gradle/wrapper-validation-action@v1
       - name: Cache build tooling
         uses: actions/cache@v3
@@ -28,9 +28,12 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.konan
-          key: ${{ runner.os }}-v4-${{ hashFiles('*.gradle.kts') }}
-          
-      - name: Publish via gradle 
-        run: ./gradlew kmmBridgePublish -PGITHUB_PUBLISH_TOKEN=${{ secrets.GITHUB_TOKEN }} -PGITHUB_REPO=${{ github.repository }} --no-daemon --stacktrace
+          key: ${{ runner.os }}-${{ hashFiles('*.gradle.kts') }}          
+
+      - name: Build and upload SPM
+        run: ./gradlew kmmBridgePublish
         env:
-          GRADLE_OPTS: -Dkotlin.incremental=false -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxPermSize=2048m -XX:+HeapDumpOnOutOfMemoryError -Dfile.encoding=UTF-8 -XX:MaxMetaspaceSize=512m"
+          LIBRARY_VERSION: ${{ env.LIBRARY_VERSION }}
+
+      - name: Run commit for Package.swift to be useful
+        run: git add Package.swift && commit -m "Make SPM v${{ env.LIBRARY_VERSION }} available to use [skip ci]"

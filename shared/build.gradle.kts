@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
+
 plugins {
     id("com.android.library")
     kotlin("multiplatform")
@@ -5,8 +7,12 @@ plugins {
     id("co.touchlab.faktory.kmmbridge")
 }
 
-group = "earth.levi"
-version = System.getenv("LIBRARY_VERSION") ?: "local"
+val packageName = "earth.levi"
+val libraryName = "dropbox"
+val libraryVersion = System.getenv("LIBRARY_VERSION") ?: "local"
+
+group = packageName
+version = libraryVersion
 
 repositories {
     gradlePluginPortal()
@@ -21,7 +27,7 @@ kotlin {
     ios {
         binaries {
             framework {
-                baseName = "dropbox"
+                baseName = libraryName
             }
         }
     }
@@ -50,7 +56,7 @@ kotlin {
 }
 
 android {
-    namespace = "earth.levi.dropbox"
+    namespace = "$packageName.$libraryName"
     compileSdk = 32
     defaultConfig {
         minSdk = 21
@@ -58,12 +64,10 @@ android {
     }
 }
 
-// Gradle plugin to generate SPM and/or cocoapods and publishes artifacts for you.
-// https://touchlab.github.io/KMMBridge/artifacts/MAVEN_REPO_ARTIFACTS
 kmmbridge {
-    mavenPublishArtifacts() // publish SPM compiled framework to Maven repository for storage. Package.swift will then point to the zip.
-    manualVersions() // we manually update the gradle module version
-    spm() // plugin should generate Package.swift file for us
+    mavenPublishArtifacts()
+    manualVersions()
+    spm(commitManually = true)
 }
 
-addGithubPackagesRepository() // assuming that you're using github actions, this function will setup github packages maven repo for the maven repo to push to.
+addGithubPackagesRepository()
